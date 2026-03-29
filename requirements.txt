@@ -1,0 +1,12 @@
+flask
+ultralytics
+opencv-python-headless
+numpy
+pillow
+requests
+mediapipe==0.10.13
+pandas
+matplotlib
+seaborn
+albumentations
+pyyaml

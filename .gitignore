@@ -1,0 +1,52 @@
+# Environments
+venv/
+.env
+.venv
+env/
+venv.bak/
+ENV/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# YOLO / Ultralytics
+runs/
+*.pt
+!best.pt
+
+# Project Data
+snapshots/
+batch_history.json
+system_state.json
+transcript.csv
+braille_transcript.txt
+data_fixed.yaml
+Models/
+
+# VS Code
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db

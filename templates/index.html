@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assistive Pickup System v2.0</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-color: #0a0a0b;
+            --card-bg: rgba(25, 25, 27, 0.95);
+            --primary-accent: #3b82f6;
+            --success-accent: #10b981;
+            --danger-accent: #ef4444;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Inter', -apple-system, sans-serif;
+            padding-bottom: 140px;
+        }
+
+        .navbar {
+            background: var(--card-bg);
+            border-bottom: 1px solid #222;
+            padding: 1rem 0;
+            backdrop-filter: blur(10px);
+        }
+
+        .main-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 720px;
+            margin: 0 auto 2rem;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 2px solid #333;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            background: #000;
+        }
+
+        #processedImage {
+            width: 100%;
+            display: block;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid #333;
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: transform 0.2s ease;
+        }
+
+        .stat-card {
+            text-align: center;
+            border-bottom: 4px solid var(--primary-accent);
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--primary-accent);
+        }
+
+        .batch-setup-title {
+            color: var(--text-main);
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-group-custom {
+            margin-bottom: 1.5rem;
+        }
+
+        .input-group-custom label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .form-control-lg {
+            background: #111 !important;
+            border: 1px solid #444 !important;
+            color: white !important;
+            font-weight: 700;
+            font-size: 1.5rem;
+            text-align: center;
+        }
+
+        .btn-action {
+            padding: 1rem;
+            font-weight: 700;
+            border-radius: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-voice-toggle {
+            height: 80px;
+            width: 100%;
+            font-size: 1.2rem;
+            border-radius: 40px;
+            background: var(--danger-accent);
+            border: none;
+            color: white;
+            box-shadow: 0 10px 20px rgba(239, 68, 68, 0.2);
+        }
+
+        .btn-voice-toggle.active {
+            background: var(--success-accent);
+            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .voice-status-bar {
+            background: #111;
+            padding: 1rem;
+            border-radius: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: #00ff00;
+            height: 60px;
+            overflow-y: hidden;
+            border: 1px solid #333;
+        }
+
+        .footer-controls {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 11, 0.9);
+            backdrop-filter: blur(15px);
+            padding: 1.5rem;
+            border-top: 1px solid #333;
+            z-index: 1000;
+        }
+
+        .badge-live {
+            background: var(--danger-accent);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .progress-bar-custom {
+            height: 8px;
+            background: #222;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--success-accent);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="container d-flex justify-content-between align-items-center">
+            <span class="h4 mb-0 fw-bold"><i class="fa-solid fa-robot text-primary me-2"></i>ASSISTIVE COUNTER</span>
+            <span class="badge badge-live">SYSTEM LIVE</span>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <div class="row">
+            <!-- Left Side: Video Feed -->
+            <div class="col-lg-7">
+                <div class="video-wrapper" aria-label="Camera feed showing identified objects and hand position">
+                    <img id="processedImage" src="https://via.placeholder.com/640x480?text=Initializing+Camera..." alt="Camera Feed">
+                </div>
+                
+                <button id="toggleVoiceBtn" class="btn-voice-toggle mb-3" aria-label="Toggle voice commands">
+                    <i class="fa-solid fa-microphone me-2"></i> ENABLE VOICE CONTROL
+                </button>
+                
+                <div id="voiceLog" class="voice-status-bar" aria-live="polite">
+                    <i class="fa-solid fa-terminal me-2"></i> Waiting for voice commands...
+                </div>
+            </div>
+
+            <!-- Right Side: Controls & Progress -->
+            <div class="col-lg-5">
+                <!-- Manual Batch Entry -->
+                <div class="card shadow-lg" role="region" aria-labelledby="batch-setup-title">
+                    <h5 id="batch-setup-title" class="batch-setup-title"><i class="fa-solid fa-layer-group text-primary"></i> MANUAL BATCH SETUP</h5>
+                    
+                    <div class="row">
+                        <div class="col-4">
+                            <div class="input-group-custom">
+                                <label for="mNut">Nuts</label>
+                                <input type="number" id="mNut" class="form-control form-control-lg" value="0" min="0" aria-label="Target number of nuts">
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="input-group-custom">
+                                <label for="mBolt">Bolts</label>
+                                <input type="number" id="mBolt" class="form-control form-control-lg" value="0" min="0" aria-label="Target number of bolts">
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="input-group-custom">
+                                <label for="mBearing">Bearings</label>
+                                <input type="number" id="mBearing" class="form-control form-control-lg" value="0" min="0" aria-label="Target number of bearings">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button id="btnStartBatch" class="btn btn-success btn-action" aria-label="Start new batch">START BATCH</button>
+                        <button id="btnStopBatch" class="btn btn-outline-danger btn-action" aria-label="Abort current batch">ABORT BATCH</button>
+                    </div>
+                </div>
+
+                <!-- Live Progress Card -->
+                <div id="progressCard" class="card" style="opacity: 0.5;" role="region" aria-labelledby="live-progress-title">
+                    <h5 id="live-progress-title" class="batch-setup-title"><i class="fa-solid fa-chart-line text-success"></i> LIVE PROGRESS</h5>
+                    <div id="batchInfoText" class="text-muted small mb-3">No active batch</div>
+                    
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-end">
+                            <span class="h6 mb-0">TOTAL COMPLETION</span>
+                            <span id="batchPercent" class="fw-bold text-success" aria-live="polite">0%</span>
+                        </div>
+                        <div class="progress-bar-custom" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                            <div id="totalProgressFill" class="progress-fill"></div>
+                        </div>
+                    </div>
+
+                    <div class="row text-center g-2">
+                        <div class="col-4">
+                            <div class="p-2 border border-secondary rounded" aria-label="Nut count">
+                                <div class="text-muted small">NUTS</div>
+                                <div id="countNut" class="h4 fw-bold mb-0">0/0</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-2 border border-secondary rounded" aria-label="Bolt count">
+                                <div class="text-muted small">BOLTS</div>
+                                <div id="countBolt" class="h4 fw-bold mb-0">0/0</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-2 border border-secondary rounded" aria-label="Bearing count">
+                                <div class="text-muted small">BEARINGS</div>
+                                <div id="countBearing" class="h4 fw-bold mb-0">0/0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-controls">
+        <div class="container d-flex justify-content-center gap-3">
+            <button id="btnStartCam" class="btn btn-primary btn-action px-4"><i class="fa-solid fa-video me-2"></i> START CAMERA</button>
+            <button id="btnUndo" class="btn btn-warning btn-action px-4"><i class="fa-solid fa-undo me-2"></i> UNDO LAST</button>
+            <button id="btnReset" class="btn btn-danger btn-action px-4"><i class="fa-solid fa-trash-can me-2"></i> RESET SYSTEM</button>
+        </div>
+    </div>
+
+    <!-- Video Processing Resources -->
+    <video id="video" style="display:none;" autoplay playsinline></video>
+    <canvas id="canvas" style="display:none;"></canvas>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const processedImage = document.getElementById('processedImage');
+        const voiceLog = document.getElementById('voiceLog');
+        
+        let isListening = false, isProcessing = false, isSpeaking = false;
+        let recognition = null, audioQueue = [], lastUtterance = "";
+        
+        // --- Web Audio API for Tones ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playTone(freq, duration, type = 'sine') {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        // --- Audio Guidance Queue ---
+        function speak(text, priority = 0) {
+            if (!text || text === lastUtterance) return;
+            const msg = new SpeechSynthesisUtterance(text);
+            msg.onstart = () => { isSpeaking = true; logVoice(text); };
+            msg.onend = () => { 
+                isSpeaking = false; 
+                setTimeout(processQueue, 50); 
+            };
+            msg.onerror = () => {
+                isSpeaking = false;
+                processQueue();
+            };
+            
+            if (priority === 1) {
+                audioQueue.unshift(msg);
+                if (isSpeaking) window.speechSynthesis.cancel();
+            } else {
+                audioQueue.push(msg);
+            }
+            
+            lastUtterance = text;
+            setTimeout(() => { if (lastUtterance === text) lastUtterance = ""; }, 3000);
+            processQueue();
+        }
+
+        function processQueue() {
+            if (isSpeaking || audioQueue.length === 0) return;
+            window.speechSynthesis.speak(audioQueue.shift());
+        }
+
+        function logVoice(txt) {
+            voiceLog.innerHTML = `<i class="fa-solid fa-comment-dots me-2"></i> Speaking: ${txt}`;
+        }
+
+        // --- Voice Command Handler ---
+        if ('webkitSpeechRecognition' in window) {
+            recognition = new webkitSpeechRecognition();
+            recognition.continuous = true;
+            recognition.onresult = (e) => {
+                const cmd = e.results[e.results.length-1][0].transcript.toLowerCase();
+                handleVoiceCommand(cmd);
+            };
+            recognition.onend = () => { if (isListening) recognition.start(); };
+        }
+
+        async function handleVoiceCommand(cmd) {
+            logVoice("Command heard: " + cmd);
+            if (cmd.includes('undo')) {
+                const res = await fetch('/undo', {method: 'POST'});
+                const data = await res.json();
+                speak(data.message, 1);
+            } else if (cmd.includes('pause')) {
+                await fetch('/pause', {method: 'POST'});
+                speak("Counting paused.", 1);
+            } else if (cmd.includes('resume')) {
+                await fetch('/resume', {method: 'POST'});
+                speak("Counting resumed.", 1);
+            } else if (cmd.includes('status')) {
+                const res = await fetch('/status');
+                const data = await res.json();
+                speak(data.message, 1);
+            } else if (cmd.includes('start batch')) {
+                const nutMatch = cmd.match(/(\d+)\s*nut/);
+                const boltMatch = cmd.match(/(\d+)\s*bolt/);
+                const bearingMatch = cmd.match(/(\d+)\s*bearing/);
+                
+                const targets = {
+                    Nut: nutMatch ? parseInt(nutMatch[1]) : 0,
+                    Bolt: boltMatch ? parseInt(boltMatch[1]) : 0,
+                    Bearing: bearingMatch ? parseInt(bearingMatch[1]) : 0
+                };
+                
+                if (targets.Nut === 0 && targets.Bolt === 0 && targets.Bearing === 0) {
+                    speak("Could not understand quantities. Say something like: start batch with 5 nuts and 3 bolts.", 1);
+                } else {
+                    startBatch(targets);
+                }
+            } else if (cmd.includes('reset')) {
+                resetSystem();
+            }
+        }
+
+        // --- API Integration ---
+        async function startBatch(targets) {
+            const res = await fetch('/start_batch', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({targets})
+            });
+            
+            let targetList = [];
+            if (targets.Nut > 0) targetList.push(`${targets.Nut} nuts`);
+            if (targets.Bolt > 0) targetList.push(`${targets.Bolt} bolts`);
+            if (targets.Bearing > 0) targetList.push(`${targets.Bearing} bearings`);
+            
+            speak(`New batch started with ${targetList.join(", ")}. Follow the audio guidance.`, 1);
+            document.getElementById('progressCard').style.opacity = "1";
+            
+            // AUTO-START CAMERA
+            if (!isProcessing) {
+                startCamera();
+            }
+        }
+
+        // Periodic Status Update (every 45s if batch is active)
+        setInterval(async () => {
+            if (isProcessing) {
+                const res = await fetch('/status');
+                const data = await res.json();
+                speak(data.message, 0);
+            }
+        }, 45000);
+
+        async function resetSystem() {
+            if (confirm("Are you sure you want to reset all counts and model history?")) {
+                await fetch('/reset', {method: 'POST'});
+                location.reload();
+            }
+        }
+
+        // --- Main Camera Loop ---
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { 
+                        facingMode: { ideal: "environment" },
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    }
+                });
+                video.srcObject = stream;
+                isProcessing = true;
+                loop();
+                document.getElementById('btnStartCam').style.display = 'none';
+            } catch (err) {
+                console.error("Camera error:", err);
+                alert("Camera access denied or device not found.");
+            }
+        }
+
+        async function stopCamera() {
+            isProcessing = false;
+            if (video.srcObject) {
+                video.srcObject.getTracks().forEach(track => track.stop());
+            }
+            document.getElementById('btnStartCam').style.display = 'inline-block';
+            document.getElementById('progressCard').style.opacity = "0.5";
+        }
+
+        async function loop() {
+            if (!isProcessing) return;
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                canvas.width = 640; canvas.height = 480;
+                canvas.getContext('2d').drawImage(video, 0, 0, 640, 480);
+                const blob = canvas.toDataURL('image/jpeg', 0.8);
+                
+                try {
+                    const res = await fetch('/process', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({image: blob})
+                    });
+                    const data = await res.json();
+                    if (data.image) {
+                        processedImage.src = data.image;
+                        updateUI(data);
+                        processAudioEvents(data.audio_events);
+                        
+                        // AUTO-STOP ON COMPLETION
+                        if (data.auto_complete) {
+                            playTone(523.25, 0.2); // C5
+                            setTimeout(() => playTone(659.25, 0.2), 200); // E5
+                            setTimeout(() => playTone(783.99, 0.2), 400); // G5
+                            setTimeout(() => playTone(1046.50, 0.4), 600); // C6
+                            speak("Batch completed successfully. All targets reached. Great job!", 1);
+                            setTimeout(stopCamera, 3000); 
+                        }
+                    }
+                } catch (e) { console.error("API error", e); }
+            }
+            setTimeout(loop, 100); // 10 FPS for stability
+        }
+
+        function updateUI(data) {
+            const b = data.batch;
+            if (b) {
+                document.getElementById('progressCard').style.opacity = "1";
+                document.getElementById('batchInfoText').innerText = b.auto_complete ? "BATCH COMPLETED!" : "Active Batch ID: " + b.id;
+                
+                let totalTarget = 0, totalDone = 0;
+                for (const k of ['Nut', 'Bolt', 'Bearing']) {
+                    const done = b.counts[k] || 0;
+                    const target = b.targets[k] || 0;
+                    document.getElementById(`count${k}`).innerText = `${done}/${target}`;
+                    totalTarget += target;
+                    totalDone += done;
+                }
+                
+                const percent = totalTarget > 0 ? Math.round((totalDone / totalTarget) * 100) : 0;
+                document.getElementById('batchPercent').innerText = percent + "%";
+                document.getElementById('totalProgressFill').style.width = percent + "%";
+            }
+        }
+
+        function processAudioEvents(events) {
+            if (!events) return;
+            events.forEach(e => {
+                if (e.startsWith("count_confirm_")) {
+                    const parts = e.split("_");
+                    const label = parts[1];
+                    const sn = parts[2];
+                    const done = parts[3];
+                    const target = parts[4];
+                    playTone(880, 0.3); // High beep
+                    if (target === "0") {
+                        speak(`${label} ${sn} counted.`, 1);
+                    } else {
+                        speak(`${label} ${sn} counted. Success. ${done} of ${target}`, 1);
+                    }
+                } else if (e.startsWith("move_")) {
+                    const [_, direction, dist] = e.split("_");
+                    speak(`Move ${direction} ${dist} centimetres`, 0);
+                } else {
+                    const map = {
+                        "pick_now": "Pick now!",
+                        "get_ready": "Object approaching.",
+                        "hand_on_object": "On object. Pick now.",
+                        "wrong_object": "Warning. Wrong object picked.",
+                        "object_missed": "Object passed without pickup.",
+                        "diag_no_hand": "Hand not visible. Bring hand in front of camera.",
+                        "diag_low_light": "Low light detected – objects may not be visible.",
+                        "diag_heartbeat": "System active.",
+                        "diag_no_obj": "No objects detected. Check camera orientation.",
+                        "system_paused": "Counting is currently paused."
+                    };
+                    if (map[e]) {
+                        if (e === "wrong_object") playTone(220, 0.5, 'square'); // Low buzz
+                        speak(map[e], e === "pick_now" || e === "wrong_object" ? 1 : 0);
+                    }
+                }
+            });
+        }
+
+        // --- Button Bindings ---
+        document.getElementById('btnStartBatch').onclick = () => {
+            startBatch({
+                Nut: document.getElementById('mNut').value,
+                Bolt: document.getElementById('mBolt').value,
+                Bearing: document.getElementById('mBearing').value
+            });
+        };
+        document.getElementById('btnStopBatch').onclick = () => fetch('/stop_batch', {method: 'POST'}).then(() => location.reload());
+        document.getElementById('btnStartCam').onclick = startCamera;
+        document.getElementById('btnReset').onclick = resetSystem;
+        document.getElementById('btnUndo').onclick = async () => {
+            const res = await fetch('/undo', {method: 'POST'});
+            const data = await res.json();
+            speak(data.message);
+        };
+        document.getElementById('toggleVoiceBtn').onclick = () => {
+            isListening = !isListening;
+            if (isListening) recognition.start(); else recognition.stop();
+            document.getElementById('toggleVoiceBtn').classList.toggle('active');
+            document.getElementById('toggleVoiceBtn').innerHTML = isListening ? 
+                '<i class="fa-solid fa-microphone-slash me-2"></i> DISABLE VOICE CONTROL' : 
+                '<i class="fa-solid fa-microphone me-2"></i> ENABLE VOICE CONTROL';
+        };
+    </script>
+</body>
+</html>
